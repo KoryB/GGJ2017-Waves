@@ -13,6 +13,9 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class GGJ2017_Game implements Screen {
     final Drop game;
 
@@ -26,10 +29,15 @@ public class GGJ2017_Game implements Screen {
 
     Vector3 mousePos;
     boolean mouseDown = false;
-    Wall wall = new Wall();
+    Wall hwall = new HorizWall(new Vector3(Gdx.graphics.getWidth()/2, Gdx.graphics.getHeight()/2, 0));
+    Wall vwall = new VertWall(new Vector3(Gdx.graphics.getWidth()/2 + 20, Gdx.graphics.getHeight()/2 + 20, 0));
+
+    List<Wall> mWalls;
+    int numWalls = 16;
 
     Player player = new Player();
     Body floorBody;
+    Body floorBody2;
 
     Box2DManager PHYS_MAN = Box2DManager.getInstance();
     EmissionManager EM_MAN = EmissionManager.getInstance();
@@ -64,15 +72,33 @@ public class GGJ2017_Game implements Screen {
 
         mousePos = new Vector3();
 
+        mWalls = new ArrayList<Wall>();
+
+        for (int i = 0; i <= numWalls; i++) {
+            mWalls.add(new HorizWall(
+                    new Vector3(i*50, Gdx.graphics.getHeight()/2, 0)
+            ));
+            mWalls.add(new VertWall(
+                    new Vector3(Gdx.graphics.getWidth()/2+20, i*50, 0)
+            ));
+        }
+
         /////// BOX 2D //////////
         // Render before physics
 
         floorBody = PHYS_MAN.getBox(
-                Gdx.graphics.getWidth() / 2 - 75, Gdx.graphics.getHeight() / 2,
+                Gdx.graphics.getWidth() / 2 - 75, Gdx.graphics.getHeight() / 2 - 50,
                 100, 5,
                 BodyDef.BodyType.StaticBody, true
         );
-        floorBody.setUserData("Floor");
+        floorBody.setUserData(0);
+
+        floorBody2 = PHYS_MAN.getBox(
+                Gdx.graphics.getWidth() / 2 + 100, Gdx.graphics.getHeight() / 2 - 150,
+                100, 5,
+                BodyDef.BodyType.StaticBody, true
+        );
+        floorBody2.setUserData(1);
     }
 
     @Override
@@ -81,7 +107,7 @@ public class GGJ2017_Game implements Screen {
         // arguments to glClearColor are the red, green
         // blue and alpha component in the range [0,1]
         // of the color to be used to clear the screen.
-        Gdx.gl.glClearColor(0.2f, 0.2f, 0.2f, 1);
+        Gdx.gl.glClearColor(0.0f, 0.0f, 0.0f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         // tell the camera to update its matrices.
@@ -103,7 +129,9 @@ public class GGJ2017_Game implements Screen {
         shaderProgram.begin();
         shaderProgram.setUniformMatrix("u_projTrans", camera.combined);
         EM_MAN.render(shaderProgram);
-        wall.render(shaderProgram);
+        for (Wall wall : mWalls) {
+            wall.render(shaderProgram);
+        }
 
         shaderProgram.end();
 

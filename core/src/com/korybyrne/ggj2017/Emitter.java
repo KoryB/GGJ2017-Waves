@@ -11,7 +11,7 @@ import com.badlogic.gdx.math.Vector3;
 
 public class Emitter {
     private static Mesh MESH = null;
-    private static float AMPLITUDE = 1.0f;
+    private static float AMPLITUDE = 10.0f;
     private static float PERIOD = 10f;
     private static float FREQUENCY = (float) ( (2*Math.PI) / 10 );  // Period of 10
 

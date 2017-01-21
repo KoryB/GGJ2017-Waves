@@ -30,7 +30,7 @@ public class PlayerCollisionListener implements ContactListener {
                 }
                 finalPos = finalPos.scl(Box2DManager.WORLD_SCALE);
 
-                EmissionManager.getInstance().trigger(0, finalPos);
+                EmissionManager.getInstance().trigger((Integer)userData, finalPos);
             }
         }
 

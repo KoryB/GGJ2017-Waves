@@ -12,6 +12,7 @@ public class DesktopLauncher {
         config.width = Drop.SCREEN_WIDTH;
         config.height = Drop.SCREEN_HEIGHT;
         config.foregroundFPS = 30;
+		config.samples = 4;
 		new LwjglApplication(new Drop(), config);
 	}
 }

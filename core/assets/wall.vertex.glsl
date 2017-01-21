@@ -14,13 +14,13 @@ uniform float u_wavesFreq[WAVES];
 uniform float u_wavesWidth[WAVES];
 uniform float u_wavesEnd[WAVES];
 
-
-varying vec4 v_color;
+varying float v_oscillationOffest;
 
 void main() {
     vec4 globalPos = u_trans * a_position;
 
     vec4 oscillationOffset = vec4(0.0);
+    float totalOscillation = 0.0;
 
     for (int i = 0; i < WAVES; i++) {
         float wavesPeriod = 1.0 / u_wavesFreq[i];
@@ -38,9 +38,10 @@ void main() {
                 2);
 
             oscillationOffset += toMe * ((oscillation * attenuation) / float(WAVES) );
+            totalOscillation += (oscillation * attenuation) / (u_wavesAmplitude[i]);
         }
     }
 
-    v_color = vec4(1);
-    gl_Position = u_projTrans * (globalPos + 10.0*oscillationOffset);
+    v_oscillationOffest = totalOscillation / (float(WAVES));
+    gl_Position = u_projTrans * (globalPos + oscillationOffset);
 }
