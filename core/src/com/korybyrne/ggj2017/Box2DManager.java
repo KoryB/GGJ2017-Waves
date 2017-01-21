@@ -7,14 +7,14 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 
 public class Box2DManager {
-    private static Box2DManager mInstance;
+    private final static Box2DManager mInstance;
+    public final static Vector2 GRAVITY = new Vector2(0, -10f);;
+    public final static float WORLD_SCALE = 30;; // 1 meter is 30 pixels
     static {
         mInstance = new Box2DManager();
     }
 
     public World mWorld; // My world
-    public final Vector2 GRAVITY = new Vector2(0, -10f);
-    public final float WORLD_SCALE = 30; // 1 meter is 30 pixels
 
     Box2DDebugRenderer mDebugRenderer;
     Matrix4 mDebugMatrix;
@@ -22,7 +22,12 @@ public class Box2DManager {
     private Box2DManager() {
         Box2D.init();
 
+        if (GRAVITY == null) {
+            throw new RuntimeException("WTF?");
+        }
+
         mWorld = new World(GRAVITY, true);
+        mWorld.setContactListener(new PlayerCollisionListener());
 
         mDebugRenderer = new Box2DDebugRenderer();
         mDebugMatrix = new Matrix4();

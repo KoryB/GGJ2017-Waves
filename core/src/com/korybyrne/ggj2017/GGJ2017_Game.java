@@ -9,15 +9,15 @@ import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.*;
 
 public class GGJ2017_Game implements Screen {
     final Drop game;
 
-    Texture bucketImage;
-    Sprite bucketSprite;
     SpriteBatch spriteBatch;
+    ShapeRenderer shapeRenderer;
     Sound dropSound;
     Music rainMusic;
 
@@ -26,25 +26,19 @@ public class GGJ2017_Game implements Screen {
 
     Vector3 mousePos;
     boolean mouseDown = false;
-
-    Emitter emitter = new Emitter(0, new Vector3(400, 100, 0));
-    Emitter emitter2 = new Emitter(1, new Vector3(375, 100, 0));
     Wall wall = new Wall();
 
-    Body body;
+    Player player = new Player();
     Body floorBody;
 
     Box2DManager PHYS_MAN = Box2DManager.getInstance();
+    EmissionManager EM_MAN = EmissionManager.getInstance();
 
     public GGJ2017_Game(final Drop gam) {
         this.game = gam;
 
-        // load the images for the droplet and the bucket, 64x64 pixels each
-        bucketImage = new Texture(Gdx.files.internal("bucket.png"));
-        bucketSprite = new Sprite(bucketImage);
-        bucketSprite.setOriginCenter();
-
         spriteBatch = new SpriteBatch();
+        shapeRenderer = new ShapeRenderer();
 
         // load the drop sound effect and the rain background "music"
         dropSound = Gdx.audio.newSound(Gdx.files.internal("drop.wav"));
@@ -73,17 +67,12 @@ public class GGJ2017_Game implements Screen {
         /////// BOX 2D //////////
         // Render before physics
 
-        body = PHYS_MAN.getBox(
-                Gdx.graphics.getWidth() / 2, Gdx.graphics.getHeight(),
-                bucketSprite.getWidth(), bucketSprite.getHeight(),
-                BodyDef.BodyType.DynamicBody, true
-        );
-
         floorBody = PHYS_MAN.getBox(
                 Gdx.graphics.getWidth() / 2 - 75, Gdx.graphics.getHeight() / 2,
                 100, 5,
                 BodyDef.BodyType.StaticBody, true
         );
+        floorBody.setUserData("Floor");
     }
 
     @Override
@@ -99,15 +88,11 @@ public class GGJ2017_Game implements Screen {
         camera.update();
         PHYS_MAN.updateDebug(camera.combined);
 
-        emitter.update(delta);
-        emitter2.update(delta);
-        PHYS_MAN.updateSprite(bucketSprite, body);
+        EM_MAN.update(delta);
+        PHYS_MAN.updateSprite(player.getSprite(), player.getBody());
 
         if (!mouseDown && Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
             mouseDown = true;
-
-            emitter.trigger();
-            emitter2.trigger();
         } else {
             mouseDown = false;
         }
@@ -117,25 +102,18 @@ public class GGJ2017_Game implements Screen {
 
         shaderProgram.begin();
         shaderProgram.setUniformMatrix("u_projTrans", camera.combined);
-        emitter.setEmissionUniforms(shaderProgram);
-        emitter2.setEmissionUniforms(shaderProgram);
-
-        emitter.render(shaderProgram);
-        emitter2.render(shaderProgram);
+        EM_MAN.render(shaderProgram);
         wall.render(shaderProgram);
 
         shaderProgram.end();
 
         spriteBatch.begin();
-
-        spriteBatch.draw(
-                bucketSprite,
-                bucketSprite.getX() - bucketSprite.getWidth() / 2, bucketSprite.getY() - bucketSprite.getHeight() / 2,
-                bucketSprite.getOriginX(), bucketSprite.getOriginY(),
-                bucketSprite.getWidth(), bucketSprite.getHeight(),
-                bucketSprite.getScaleX(), bucketSprite.getScaleY(),
-                bucketSprite.getRotation());
+        player.render(spriteBatch);
         spriteBatch.end();
+
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        EM_MAN.renderCircles(shapeRenderer);
+        shapeRenderer.end();
 
         PHYS_MAN.renderDebug();
 
@@ -166,7 +144,7 @@ public class GGJ2017_Game implements Screen {
 
     @Override
     public void dispose() {
-        bucketImage.dispose();
+        player.dispose();
         dropSound.dispose();
         rainMusic.dispose();
 

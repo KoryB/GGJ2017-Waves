@@ -4,6 +4,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Mesh;
 import com.badlogic.gdx.graphics.VertexAttribute;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
@@ -28,7 +29,7 @@ public class Emitter {
     private int mGLIndex;
     private String mGLIndexString;
 
-    public Emitter(int index, Vector3 pos) {
+    public Emitter(int index) {
         if (MESH == null) {
             MESH = new Mesh(true, 4, 0, VertexAttribute.Position());
             MESH.setVertices(new float[] {
@@ -39,7 +40,7 @@ public class Emitter {
             });
         }
 
-        mPos = pos.cpy();
+        mPos = Vector3.Zero.cpy();
         mTransform = new Matrix4();
 
         mGLIndex = index;
@@ -61,12 +62,18 @@ public class Emitter {
         shaderProgram.setUniform1fv("u_wavesFreq" + mGLIndexString, new float[] {
                 FREQUENCY
         }, 0, 1);
+        shaderProgram.setUniform1fv("u_wavesTheta" + mGLIndexString, new float[]{mTheta}, 0, 1);
+        shaderProgram.setUniform1fv("u_wavesWidth" + mGLIndexString, new float[]{mTriggerWidth}, 0, 1);
+        shaderProgram.setUniform1fv("u_wavesEnd" + mGLIndexString, new float[]{mEnd}, 0, 1);
     }
 
-    public void trigger() {
+    public void trigger(Vector2 pos) {
         mTriggerTime = mTriggerLength;
         mEnd = 0.0f;
         mTheta = 0.0f;
+
+        mPos.x = pos.x;
+        mPos.y = pos.y;
     }
 
     public void update(float delta) {
@@ -79,12 +86,13 @@ public class Emitter {
     }
 
     public void render(ShaderProgram shaderProgram) {
-
         mTransform.setTranslation(mPos);
         shaderProgram.setUniformMatrix("u_trans", mTransform);
-        shaderProgram.setUniform1fv("u_wavesTheta" + mGLIndexString, new float[]{mTheta}, 0, 1);
-        shaderProgram.setUniform1fv("u_wavesWidth" + mGLIndexString, new float[]{mTriggerWidth}, 0, 1);
-        shaderProgram.setUniform1fv("u_wavesEnd" + mGLIndexString, new float[]{mEnd}, 0, 1);
         MESH.render(shaderProgram, GL20.GL_TRIANGLE_STRIP);
+    }
+
+    public void renderCircle(ShapeRenderer shapeRenderer) {
+        shapeRenderer.circle(mPos.x, mPos.y, mEnd);
+        shapeRenderer.circle(mPos.x, mPos.y, mEnd-mTriggerWidth);
     }
 }
