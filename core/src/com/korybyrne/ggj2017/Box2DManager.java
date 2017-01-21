@@ -12,7 +12,7 @@ public class Box2DManager {
         mInstance = new Box2DManager();
     }
 
-    public World mWorld;
+    public World mWorld; // My world
     public final Vector2 GRAVITY = new Vector2(0, -10f);
     public final float WORLD_SCALE = 30; // 1 meter is 30 pixels
 
