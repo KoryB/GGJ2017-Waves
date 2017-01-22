@@ -13,7 +13,7 @@ public class Emitter {
     private static Mesh MESH = null;
     private static float AMPLITUDE = 10.0f;
     private static float PERIOD = 10f;
-    private static float FREQUENCY = (float) ( (2*Math.PI) / 10 );  // Period of 10
+    private static float FREQUENCY = (float) (2*Math.PI/20);  // Period of 10
 
     private Vector3 mPos;
     private float mSpinRate = (float) (2*Math.PI);
@@ -21,15 +21,16 @@ public class Emitter {
     private Matrix4 mTransform;
 
     private float mTriggerTime = 0.0f;
-    private float mTriggerLength = 10.0f;
+    private float mTriggerLength = 2.0f;
     private float mEnd = 0.0f;
-    private float mFinalEnd = 800.0f;
+    private float mFinalEnd = 500.0f;
     private float mTriggerSpeed = mFinalEnd / mTriggerLength;
     private float mTriggerWidth = 50.0f;
     private int mGLIndex;
     private String mGLIndexString;
 
     private boolean mActive = false;
+    private boolean mDrawNextFrame = false;
 
     public Emitter() {
         if (MESH == null) {
@@ -55,18 +56,22 @@ public class Emitter {
 //        uniform float u_wavesAmplitude;
 //        uniform float u_wavesFreq;
 
-        shaderProgram.setUniform4fv("u_wavesOrigin" + mGLIndexString, new float[] {
-                mPos.x, mPos.y, mPos.z, 1
-        }, 0, 4);
-        shaderProgram.setUniform1fv("u_wavesAmplitude" + mGLIndexString, new float[] {
-                AMPLITUDE
-        }, 0, 1);
-        shaderProgram.setUniform1fv("u_wavesFreq" + mGLIndexString, new float[] {
-                FREQUENCY
-        }, 0, 1);
-        shaderProgram.setUniform1fv("u_wavesTheta" + mGLIndexString, new float[]{mTheta}, 0, 1);
-        shaderProgram.setUniform1fv("u_wavesWidth" + mGLIndexString, new float[]{mTriggerWidth}, 0, 1);
-        shaderProgram.setUniform1fv("u_wavesEnd" + mGLIndexString, new float[]{mEnd}, 0, 1);
+        if (mActive || mDrawNextFrame) {
+            mDrawNextFrame = false;
+            shaderProgram.setUniform4fv("u_wavesOrigin" + mGLIndexString, new float[]{
+                    mPos.x, mPos.y, mPos.z, 1
+            }, 0, 4);
+            shaderProgram.setUniform1fv("u_wavesAmplitude" + mGLIndexString, new float[]{
+                    AMPLITUDE
+            }, 0, 1);
+            shaderProgram.setUniform1fv("u_wavesFreq" + mGLIndexString, new float[]{
+                    FREQUENCY
+            }, 0, 1);
+            shaderProgram.setUniform1fv("u_wavesTheta" + mGLIndexString, new float[]{mTheta}, 0, 1);
+            shaderProgram.setUniform1fv("u_wavesWidth" + mGLIndexString, new float[]{mTriggerWidth}, 0, 1);
+            shaderProgram.setUniform1fv("u_wavesEnd" + mGLIndexString, new float[]{mEnd}, 0, 1);
+            shaderProgram.setUniform1fv("u_wavesFinal" + mGLIndexString, new float[]{mFinalEnd}, 0, 1);
+        }
     }
 
     protected void setGLIndex(int index) {
@@ -94,6 +99,8 @@ public class Emitter {
             mTheta += mSpinRate * delta;
 
             if (mTriggerTime < 0) {
+                mActive = false;
+                mDrawNextFrame = true;
                 mTriggerTime = 0;
                 mEnd = 0.0f;
                 mTheta = 0.0f;
@@ -108,8 +115,13 @@ public class Emitter {
     }
 
     public void renderCircle(ShapeRenderer shapeRenderer) {
-        shapeRenderer.circle(mPos.x, mPos.y, mEnd);
-        shapeRenderer.circle(mPos.x, mPos.y, mEnd-mTriggerWidth);
+        if (mActive) {
+            float attenuation = (mFinalEnd - mEnd) / mFinalEnd;
+            shapeRenderer.setColor(attenuation, attenuation, attenuation, attenuation);
+            shapeRenderer.circle(mPos.x, mPos.y, mEnd);
+            shapeRenderer.circle(mPos.x, mPos.y, mEnd-mTriggerWidth);
+            shapeRenderer.circle(mPos.x, mPos.y, 10);
+        }
     }
 
     public boolean isActive() {

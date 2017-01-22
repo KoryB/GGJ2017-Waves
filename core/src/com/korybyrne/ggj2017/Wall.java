@@ -9,6 +9,11 @@ import com.badlogic.gdx.math.Vector3;
 
 
 public abstract class Wall {
+    public static final int SIZE = 50;
+    public static final int HALF_SIZE = SIZE/2;
+    public static final int THICKNESS = 7;
+    public static final int HALF_THICKNESS = 7/2;
+
     protected Vector3 mPos;
     protected Matrix4 mTransform;
 

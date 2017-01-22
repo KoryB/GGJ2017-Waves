@@ -24,6 +24,18 @@ public class EmissionManager {
             mEmitters[i] = new Emitter();
         }
     }
+    
+    public void init(ShaderProgram shaderProgram) {
+
+        // Initialize gl
+        shaderProgram.setUniform4fv("u_wavesOrigin[0]", new float[WAVES*4], 0, WAVES*4);
+        shaderProgram.setUniform1fv("u_wavesAmplitude[0]", new float[WAVES], 0, WAVES);
+        shaderProgram.setUniform1fv("u_wavesFreq[0]", new float[WAVES], 0, WAVES);
+        shaderProgram.setUniform1fv("u_wavesTheta[0]", new float[WAVES], 0, WAVES);
+        shaderProgram.setUniform1fv("u_wavesWidth[0]", new float[WAVES], 0, WAVES);
+        shaderProgram.setUniform1fv("u_wavesEnd[0]", new float[WAVES], 0, WAVES);
+        shaderProgram.setUniform1fv("u_wavesFinal[0]", new float[WAVES], 0, WAVES);
+    }
 
     public void update(float delta) {
         for (Emitter emitter : mEmitters) {
@@ -34,16 +46,7 @@ public class EmissionManager {
     public void render(ShaderProgram shaderProgram) {
         for (Emitter emitter : mEmitters) {
             emitter.setEmissionUniforms(shaderProgram);
-            emitter.render(shaderProgram);
         }
-
-        float active = 0.0f;
-
-        for (Emitter emitter : mEmitters) {
-            active += emitter.isActive()? 1:0;
-        }
-        System.out.println(String.format("Active: %f", active));
-        shaderProgram.setUniform1fv("u_wavesActive", new float[]{active}, 1, 1);
     }
 
     public void trigger(Vector2 pos) {
@@ -56,7 +59,7 @@ public class EmissionManager {
                 return;
             }
         }
-
+        
         mEmitters[mCurrentIndex].trigger(pos, mCurrentIndex);
         mCurrentIndex = (mCurrentIndex + 1) % mEmitters.length;
     }

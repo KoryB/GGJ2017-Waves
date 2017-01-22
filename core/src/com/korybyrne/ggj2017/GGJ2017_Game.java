@@ -8,13 +8,13 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.*;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class GGJ2017_Game implements Screen {
     final Drop game;
@@ -30,12 +30,11 @@ public class GGJ2017_Game implements Screen {
     Vector3 mousePos;
     boolean mouseDown = false;
 
-    List<Wall> mWalls;
-    int numWalls = 16;
+    PhysWall physWall;
+    PhysWall vertWall;
+    int segments = 16;
 
     Player player = new Player();
-    Body floorBody;
-    Body floorBody2;
 
     Box2DManager PHYS_MAN = Box2DManager.getInstance();
     EmissionManager EM_MAN = EmissionManager.getInstance();
@@ -54,6 +53,7 @@ public class GGJ2017_Game implements Screen {
         // create the camera and the SpriteBatch
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Drop.SCREEN_WIDTH, Drop.SCREEN_HEIGHT);
+        camera.translate(0, 0);
 
         shaderProgram = new ShaderProgram(
                 Gdx.files.internal("wall.vertex.glsl"),
@@ -70,33 +70,12 @@ public class GGJ2017_Game implements Screen {
 
         mousePos = new Vector3();
 
-        mWalls = new ArrayList<Wall>();
-
-        for (int i = 0; i <= numWalls; i++) {
-            mWalls.add(new HorizWall(
-                    new Vector3(i*50, Gdx.graphics.getHeight()/2, 0)
-            ));
-            mWalls.add(new VertWall(
-                    new Vector3(Gdx.graphics.getWidth()/2+20, i*50, 0)
-            ));
-        }
 
         /////// BOX 2D //////////
         // Render before physics
 
-        floorBody = PHYS_MAN.getBox(
-                Gdx.graphics.getWidth() / 2 - 75, Gdx.graphics.getHeight() / 2 - 50,
-                500, 5,
-                BodyDef.BodyType.StaticBody, true, Box2DManager.NORMAL_GROUP
-        );
-        floorBody.setUserData(0);
-
-        floorBody2 = PHYS_MAN.getBox(
-                Gdx.graphics.getWidth() / 2 + 100, Gdx.graphics.getHeight() / 2 - 150,
-                100, 5,
-                BodyDef.BodyType.StaticBody, true, Box2DManager.NORMAL_GROUP
-        );
-        floorBody2.setUserData(1);
+        physWall = new PhysHorizWall(segments, new Vector2(0, 20));
+        vertWall = new PhysVertWall(segments, new Vector2(100, 1));
     }
 
     @Override
@@ -111,6 +90,9 @@ public class GGJ2017_Game implements Screen {
         // tell the camera to update its matrices.
         camera.update();
         PHYS_MAN.updateDebug(camera.combined);
+        spriteBatch.setProjectionMatrix(camera.combined);
+        shapeRenderer.setProjectionMatrix(camera.combined);
+
 
         EM_MAN.update(delta);
         player.update(delta);
@@ -127,11 +109,10 @@ public class GGJ2017_Game implements Screen {
         shaderProgram.begin();
         shaderProgram.setUniformMatrix("u_projTrans", camera.combined);
         EM_MAN.render(shaderProgram);
-        for (Wall wall : mWalls) {
-            wall.render(shaderProgram);
-        }
-
+        physWall.render(shaderProgram);
+        vertWall.render(shaderProgram);
         shaderProgram.end();
+
 
         spriteBatch.begin();
         player.render(spriteBatch);
@@ -141,7 +122,7 @@ public class GGJ2017_Game implements Screen {
         EM_MAN.renderCircles(shapeRenderer);
         shapeRenderer.end();
 
-        PHYS_MAN.renderDebug();
+//        PHYS_MAN.renderDebug();
 
         PHYS_MAN.step(delta);
     }
