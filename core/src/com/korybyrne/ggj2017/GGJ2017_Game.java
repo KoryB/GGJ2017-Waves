@@ -103,7 +103,9 @@ public class GGJ2017_Game implements Screen {
         float five = unit*5;
         float six = unit*6;
 
-        player = new Player(new Vector3(hallwidth/2f - unit/2, hallheight, 0f));
+        if (!DEBUG) {
+            player = new Player(new Vector3(hallwidth / 2f - unit / 2, hallheight, 0f));
+        }
 
         add(-unit*2, 0, unit*2, hallheight);
         add(hallwidth, unit*10, unit*2, hallheight);
@@ -133,20 +135,40 @@ public class GGJ2017_Game implements Screen {
         add(endx, -unit, two, hallheight);
 
         // Leveltwo
-        add(hallwidth, five + unit*20, unit*33, five);
+        add(hallwidth, five + twenty, unit*33, five);
         add(mLastX+mLastW, mLastY, six, two);
         add(mLastX+mLastW+five, mLastY - four, unit*15, two);
         add(mLastX+mLastW+three, mLastY - four, six, two);
 
+        // Levelthree
+        add(hallwidth, ten + twenty, five + ten, four);
+        add(mLastX+mLastW+five, mLastY+mLastH+two, twenty, two);
+        add(mLastX+mLastW+unit*8, mLastY, unit*34, two);
+
+        // Levelfour
+        add(hallwidth, unit*36+five, unit*37, three);
+        add(mLastX+mLastW+six+ten, mLastY-unit, twenty+six, unit);
+        add(mLastX, mLastY+mLastH, twenty, unit);
+
+        add(mLastX+three, mLastY+mLastH+three, twenty+three, unit);
+        add(mLastX, mLastY+mLastH, twenty+three, unit);
+
+        add(mLastX-unit*7-five, mLastY-three, five, three);
+//        add(mLastX+mLastW+)
+
 
         //////// SNAP CAMERA ////////////
-        Vector2 camDelta = new Vector2(
-                player.getSprite().getX() - camPos.x,
-                player.getSprite().getY() - camPos.y
-        );
+        Vector2 camDelta;
+        if (!DEBUG) {
+            camDelta = new Vector2(
+                    player.getSprite().getX() - camPos.x,
+                    player.getSprite().getY() - camPos.y
+            );
+        } else {
+            camDelta = Vector2.Zero;
+        }
         camera.translate(camDelta);
         camPos.add(camDelta);
-
         SCREEN = new Rectangle();
         updateScreen();
     }
@@ -190,6 +212,16 @@ public class GGJ2017_Game implements Screen {
         spriteBatch.setProjectionMatrix(camera.combined);
         shapeRenderer.setProjectionMatrix(camera.combined);
 
+        if (DEBUG) {
+            if (player == null) {
+                if (Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
+                    mousePos.set(Gdx.input.getX(), Gdx.input.getY(), 0);
+                    camera.unproject(mousePos);
+                    player = new Player(mousePos);
+                }
+            }
+        }
+
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
             player.rotateLeft();
         } else if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
@@ -201,7 +233,9 @@ public class GGJ2017_Game implements Screen {
         }
 
         EM_MAN.update(delta);
-        player.update(delta);
+        if (player != null) {
+            player.update(delta);
+        }
 
         // tell the camera to update its matrices.
         if (!DEBUG) {
@@ -220,15 +254,12 @@ public class GGJ2017_Game implements Screen {
                 camera.translate(Vector2.Y.cpy().scl(-DEBUG_SPEED*delta));
             }
             if (Gdx.input.isKeyPressed(Input.Keys.A)) {
-                camera.translate(Vector2.X.cpy().scl(-DEBUG_SPEED*delta));
+                camera.translate(Vector2.X.cpy().scl(-DEBUG_SPEED * delta));
             }
             if (Gdx.input.isKeyPressed(Input.Keys.D)) {
-                camera.translate(Vector2.X.cpy().scl(DEBUG_SPEED*delta));
+                camera.translate(Vector2.X.cpy().scl(DEBUG_SPEED * delta));
             }
         }
-
-        mousePos.set(Gdx.input.getX(), Gdx.input.getY(), 0);
-        camera.unproject(mousePos);
 
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
 //        EM_MAN.renderCircles(shapeRenderer);
