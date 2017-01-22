@@ -119,8 +119,8 @@ public class Emitter {
             float attenuation = ((mFinalEnd - mEnd) / mFinalEnd) / 2;
             shapeRenderer.setColor(attenuation, attenuation, attenuation, attenuation);
             shapeRenderer.circle(mPos.x, mPos.y, mEnd);
-//            shapeRenderer.circle(mPos.x, mPos.y, mEnd-mTriggerWidth);
-//            shapeRenderer.circle(mPos.x, mPos.y, 10);
+            shapeRenderer.circle(mPos.x, mPos.y, mEnd-mTriggerWidth);
+            shapeRenderer.circle(mPos.x, mPos.y, 10);
         }
     }
 

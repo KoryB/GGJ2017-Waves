@@ -3,6 +3,7 @@ package com.korybyrne.ggj2017;
 import com.badlogic.gdx.graphics.Mesh;
 import com.badlogic.gdx.graphics.VertexAttribute;
 import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 
 /**
@@ -40,6 +41,11 @@ public class HorizWall extends Wall {
                     25.00f, -3.0f, 0f, 25.00f, 3.0f, 0f,
             });
         }
+
+        mRect = new Rectangle(
+                mPos.x - Wall.HALF_SIZE, mPos.y - Wall.HALF_THICKNESS,
+                Wall.SIZE, Wall.THICKNESS
+        );
     }
 
     @Override

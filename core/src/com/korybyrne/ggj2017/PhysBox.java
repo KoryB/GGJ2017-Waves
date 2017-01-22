@@ -7,7 +7,7 @@ import com.badlogic.gdx.math.Vector3;
 /**
  * Created by kory on 1/22/17.
  */
-public class PhysBox {
+public class PhysBox implements Phys{
     private static final int TOP = 0;
     private static final int RIGHT = 1;
     private static final int BOTTOM = 2;
@@ -20,8 +20,8 @@ public class PhysBox {
     }
 
     public PhysBox(float x, float y, float w, float h) {
-        mWalls[TOP] = new PhysHorizWall(w, new Vector2(x, y+h));
-        mWalls[RIGHT] = new PhysVertWall(h, new Vector2(x+w, y));
+        mWalls[TOP] = new PhysHorizWall(w, new Vector2(x, y+h-Wall.THICKNESS));
+        mWalls[RIGHT] = new PhysVertWall(h, new Vector2(x+w-Wall.THICKNESS, y));
         mWalls[BOTTOM] = new PhysHorizWall(w, new Vector2(x, y));
         mWalls[LEFT] = new PhysVertWall(h, new Vector2(x, y));
     }

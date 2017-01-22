@@ -7,8 +7,8 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.VertexAttribute;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
-
 
 public abstract class Wall {
     public static final int SIZE = 50;
@@ -20,6 +20,7 @@ public abstract class Wall {
 
     protected Vector3 mPos;
     protected Matrix4 mTransform;
+    protected Rectangle mRect;
 
     protected Wall(Vector3 pos) {
         mPos = pos.cpy();
@@ -33,10 +34,12 @@ public abstract class Wall {
     }
 
     public void render(ShaderProgram shaderProgram) {
-        mTransform.setTranslation(mPos);
-        shaderProgram.setUniformMatrix("u_trans", mTransform);
-        BLACK_TEXTURE.bind(0);
-        shaderProgram.setUniformi("u_texture", 0);
-        getMESH().render(shaderProgram, GL20.GL_TRIANGLE_STRIP);
+        if (GGJ2017_Game.SCREEN.overlaps(mRect)) {
+            mTransform.setTranslation(mPos);
+            shaderProgram.setUniformMatrix("u_trans", mTransform);
+            BLACK_TEXTURE.bind(0);
+            shaderProgram.setUniformi("u_texture", 0);
+            getMESH().render(shaderProgram, GL20.GL_TRIANGLE_STRIP);
+        }
     }
 }

@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Created by kory on 1/21/17.
  */
-public abstract class PhysWall {
+public abstract class PhysWall implements Phys {
     protected List<Wall> mWalls;
     protected int mSegments;
 

@@ -69,6 +69,7 @@ public class Box2DManager {
         );
 
         fixtureDef.shape = polygonShape;
+//        fixtureDef.friction = 0.5f;
         fixtureDef.density = 1f;
         if (group < 0) {
             fixtureDef.isSensor = true;

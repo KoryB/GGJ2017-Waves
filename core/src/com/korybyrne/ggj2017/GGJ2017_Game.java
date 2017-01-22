@@ -12,11 +12,19 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.*;
+import org.w3c.dom.css.Rect;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class GGJ2017_Game implements Screen {
+    private static final boolean DEBUG = true;
+    private static final float DEBUG_SPEED = 1200;
+    public static Rectangle SCREEN;
     final Drop game;
 
     SpriteBatch spriteBatch;
@@ -25,20 +33,21 @@ public class GGJ2017_Game implements Screen {
     Music rainMusic;
 
     OrthographicCamera camera;
+    Vector2 camPos;
     ShaderProgram shaderProgram;
 
     Vector3 mousePos;
-    boolean mouseDown = false;
 
-    PhysWall physWall;
-    PhysWall vertWall;
-    PhysBox physBox;
-    int segments = 16;
-
-    Player player = new Player();
+    Player player;
 
     Box2DManager PHYS_MAN = Box2DManager.getInstance();
     EmissionManager EM_MAN = EmissionManager.getInstance();
+
+    List<Phys> mLevel;
+    float mLastX;
+    float mLastY;
+    float mLastW;
+    float mLastH;
 
     public GGJ2017_Game(final Drop gam) {
         this.game = gam;
@@ -54,7 +63,10 @@ public class GGJ2017_Game implements Screen {
         // create the camera and the SpriteBatch
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Drop.SCREEN_WIDTH, Drop.SCREEN_HEIGHT);
-        camera.zoom = 2f;
+        camera.zoom = 1f;
+        camPos = new Vector2(
+                Drop.SCREEN_WIDTH/2, Drop.SCREEN_HEIGHT/2
+        );
 
         shaderProgram = new ShaderProgram(
                 Gdx.files.internal("wall.vertex.glsl"),
@@ -75,9 +87,91 @@ public class GGJ2017_Game implements Screen {
         /////// BOX 2D //////////
         // Render before physics
 
-        physWall = new PhysHorizWall(segments, new Vector2(0, 20));
-        vertWall = new PhysVertWall(segments, new Vector2(100, 1));
-        physBox = new PhysBox(-200, -200, 1600, 200);
+        float unit = Wall.SIZE;
+
+        mLevel = new ArrayList<Phys>();
+
+
+        // Intro Fall
+        float hallwidth = unit*10;
+        float hallheight = unit*50;
+        float twenty = unit*20;
+        float ten = unit*10;
+        float two = unit*2;
+        float three = unit*3;
+        float four = unit*4;
+        float six = three*2;
+
+        player = new Player(new Vector3(hallwidth/2f - unit/2, hallheight, 0f));
+
+        add(-unit*2, 0, unit*2, hallheight);
+        add(hallwidth, unit*10, unit*2, hallheight);
+
+        //Gubbins
+        add(0, hallheight/2f + unit*5, hallwidth - unit*6, unit);
+        add(hallwidth - unit*1, hallheight - unit*39, unit*1, unit);
+
+
+        // Floor
+        add(0, -three, unit*30, three);
+        add(hallwidth, unit*15, 72*unit, two);
+        add(hallwidth*2, 0, twenty, three);
+        add(mLastX+mLastW, -unit*2, six, unit);
+        add(mLastX, -unit, three, unit);
+        add(mLastX+six, -unit, twenty, four);
+        add(mLastX+mLastW, -unit*2, six, unit);
+        add(mLastX, -unit, three, unit);
+
+        // Staircase
+        add(mLastX+six, -unit, twenty, four);
+        add(mLastX+ten, mLastY+mLastH, ten, three);
+        add(mLastX+six, mLastY+mLastH, four, three);
+        float endx = mLastX + mLastW;
+        add(mLastX-six, unit*12, six, three);
+        add(endx, -unit, two, hallheight);
+
+        // Leveltwo
+        add(hallwidth, unit*5 + unit*20, unit*33, unit*5);
+        add(mLastX+mLastW, mLastY, six, two);
+        add(mLastX+mLastW+unit*5, mLastY - four, unit*15, two);
+        add(mLastX+mLastW+three, mLastY - four, six, two);
+
+
+        //////// SNAP CAMERA ////////////
+        Vector2 camDelta = new Vector2(
+                player.getSprite().getX() - camPos.x,
+                player.getSprite().getY() - camPos.y
+        );
+        camera.translate(camDelta);
+        camPos.add(camDelta);
+
+        SCREEN = new Rectangle();
+        updateScreen();
+    }
+
+    private void updateScreen() {
+        SCREEN.setPosition(
+                camera.position.x - (camera.zoom * camera.viewportWidth / 2),
+                camera.position.y - (camera.zoom * camera.viewportHeight / 2)
+        );
+        SCREEN.setSize(
+                camera.zoom * camera.viewportWidth,
+                camera.zoom * camera.viewportHeight
+        );
+    }
+    
+    private Phys add(float x, float y, float w, float h) {
+        mLastX = x;
+        mLastY = y;
+        mLastW = w;
+        mLastH = h;
+        
+        return levelAdd(new PhysBox(x, y, w, h));
+    }
+
+    private Phys levelAdd(Phys phys) {
+        mLevel.add(phys);
+        return phys;
     }
 
     @Override
@@ -89,15 +183,10 @@ public class GGJ2017_Game implements Screen {
         Gdx.gl.glClearColor(0.0f, 0.0f, 0.0f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        // tell the camera to update its matrices.
         camera.update();
         PHYS_MAN.updateDebug(camera.combined);
         spriteBatch.setProjectionMatrix(camera.combined);
         shapeRenderer.setProjectionMatrix(camera.combined);
-
-
-        EM_MAN.update(delta);
-        player.update(delta);
 
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
             player.rotateLeft();
@@ -105,34 +194,64 @@ public class GGJ2017_Game implements Screen {
             player.rotateRight();
         }
 
-        if (Gdx.input.isKeyPressed(Input.Keys.Z)) {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.Z)) {
             player.jump();
+        }
+
+        EM_MAN.update(delta);
+        player.update(delta);
+
+        // tell the camera to update its matrices.
+        if (!DEBUG) {
+            Vector2 camDelta = new Vector2(
+                    player.getSprite().getX() - camPos.x,
+                    player.getSprite().getY() - camPos.y
+            ).scl(0.1f);
+            camera.translate(camDelta);
+            camPos.add(camDelta);
+            updateScreen();
+        } else {
+            if (Gdx.input.isKeyPressed(Input.Keys.W)) {
+                camera.translate(Vector2.Y.cpy().scl(DEBUG_SPEED*delta));
+            }
+            if (Gdx.input.isKeyPressed(Input.Keys.S)) {
+                camera.translate(Vector2.Y.cpy().scl(-DEBUG_SPEED*delta));
+            }
+            if (Gdx.input.isKeyPressed(Input.Keys.A)) {
+                camera.translate(Vector2.X.cpy().scl(-DEBUG_SPEED*delta));
+            }
+            if (Gdx.input.isKeyPressed(Input.Keys.D)) {
+                camera.translate(Vector2.X.cpy().scl(DEBUG_SPEED*delta));
+            }
         }
 
         mousePos.set(Gdx.input.getX(), Gdx.input.getY(), 0);
         camera.unproject(mousePos);
 
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        EM_MAN.renderCircles(shapeRenderer);
+//        EM_MAN.renderCircles(shapeRenderer);
         shapeRenderer.end();
 
-        shaderProgram.begin();
-        shaderProgram.setUniformMatrix("u_projTrans", camera.combined);
-        EM_MAN.render(shaderProgram);
-        physWall.render(shaderProgram);
-        vertWall.render(shaderProgram);
-        physBox.render(shaderProgram);
-        player.render(shaderProgram);
+        if (!DEBUG) {
+            shaderProgram.begin();
+            shaderProgram.setUniformMatrix("u_projTrans", camera.combined);
+            EM_MAN.render(shaderProgram);
+            for (Phys phys : mLevel) {
+                phys.render(shaderProgram);
+            }
+            player.render(shaderProgram);
 
-        shaderProgram.end();
-
-        PHYS_MAN.renderDebug();
+            shaderProgram.end();
+        }
+        if (DEBUG) {
+            PHYS_MAN.renderDebug();
+        }
         PHYS_MAN.step(delta);
-
     }
 
     @Override
     public void resize(int width, int height) {
+
     }
 
     @Override

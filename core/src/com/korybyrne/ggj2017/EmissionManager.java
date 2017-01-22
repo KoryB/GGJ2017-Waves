@@ -55,7 +55,7 @@ public class EmissionManager {
         while (mEmitters[mCurrentIndex].isActive()) {
             mCurrentIndex = (mCurrentIndex + 1) % mEmitters.length;
             if (startIndex == mCurrentIndex) {
-                System.out.println("All emitters full");
+//                System.out.println("All emitters full");
                 return;
             }
         }

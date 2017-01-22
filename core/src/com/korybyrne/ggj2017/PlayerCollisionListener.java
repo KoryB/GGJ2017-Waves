@@ -13,11 +13,33 @@ public class PlayerCollisionListener implements ContactListener {
 
     @Override
     public void endContact(Contact contact) {
-
     }
 
     @Override
     public void beginContact(Contact contact) {
+
+        Object userDataA = contact.getFixtureA().getBody().getUserData();
+        Object userDataB = contact.getFixtureB().getBody().getUserData();
+        Player player = null;
+        
+        if (userDataA != null) {
+            if (userDataA instanceof Player) {
+                player = (Player) userDataA;
+            }
+        }
+
+        if (userDataB != null) {
+            if (userDataB instanceof Player) {
+                player = (Player) userDataB;
+            }
+        }
+
+        if (player != null) {
+            EmissionManager.getInstance().trigger(new Vector2(
+                    player.getSprite().getX(),
+                    player.getSprite().getY()
+            ));
+        }
     }
 
     @Override

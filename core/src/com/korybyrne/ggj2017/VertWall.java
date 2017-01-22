@@ -2,6 +2,7 @@ package com.korybyrne.ggj2017;
 
 import com.badlogic.gdx.graphics.Mesh;
 import com.badlogic.gdx.graphics.VertexAttribute;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 
 /**
@@ -39,6 +40,11 @@ public class VertWall extends Wall {
                     -3.0f, 25.00f, 0f, 3.0f, 25.00f, 0f,
             });
         }
+
+        mRect = new Rectangle(
+                mPos.x - Wall.HALF_THICKNESS, mPos.y - Wall.HALF_SIZE,
+                Wall.THICKNESS, Wall.SIZE
+        );
     }
 
     @Override

@@ -46,7 +46,7 @@ public class Player {
     private boolean mMovingLeft = false;
     private float mStartTheta = 0.0f;
     private boolean mInAir = false;
-    private boolean mCanRotate = true;
+    private boolean mCanRotate = false;
 
     private Vector3 mPos;
     private Body mBody;
@@ -57,7 +57,7 @@ public class Player {
     private RevoluteJoint mStaticJoint = null;
     private boolean mRotating = false;
 
-    public Player() {
+    public Player(Vector3 pos) {
         if (MESH == null) {
             MESH = new Mesh(true, 4, 0, VertexAttribute.Position());
             MESH.setVertices(new float[]{
@@ -77,8 +77,10 @@ public class Player {
         mHalfPhysHeight = mHalfHeight / Box2DManager.WORLD_SCALE;
         mHalfPhysDiagonal =(float) (mHalfPhysHeight*Math.sqrt(2));
 
-        mPos = new Vector3(Gdx.graphics.getWidth() / 2, Gdx.graphics.getHeight(), 0);
+        mPos = pos;
         setupBody();
+
+        mBody.applyLinearImpulse(0, -10f, mBody.getWorldCenter().x, mBody.getWorldCenter().y, true);
     }
 
     protected void setupBody() {
@@ -112,6 +114,7 @@ public class Player {
                 mPos.y + mHalfHeight - JOINT_HW
         ));
 
+        Box2DManager.getInstance().updateSprite(mSprite, mBody);
     }
 
     protected RevoluteJoint createJoint(float jx, float jy) {
