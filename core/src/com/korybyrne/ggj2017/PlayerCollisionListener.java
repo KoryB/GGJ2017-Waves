@@ -17,7 +17,6 @@ public class PlayerCollisionListener implements ContactListener {
 
     @Override
     public void beginContact(Contact contact) {
-        System.out.println("Contact!");
         Object userData = contact.getFixtureA().getBody().getUserData();
         if (userData != null) {
             userData = contact.getFixtureB().getBody().getUserData();
@@ -30,7 +29,7 @@ public class PlayerCollisionListener implements ContactListener {
                 }
                 finalPos = finalPos.scl(Box2DManager.WORLD_SCALE);
 
-                EmissionManager.getInstance().trigger((Integer)userData, finalPos);
+                EmissionManager.getInstance().trigger(finalPos);
             }
         }
 

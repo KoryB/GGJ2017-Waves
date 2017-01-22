@@ -29,7 +29,9 @@ public class Emitter {
     private int mGLIndex;
     private String mGLIndexString;
 
-    public Emitter(int index) {
+    private boolean mActive = false;
+
+    public Emitter() {
         if (MESH == null) {
             MESH = new Mesh(true, 4, 0, VertexAttribute.Position());
             MESH.setVertices(new float[] {
@@ -43,7 +45,7 @@ public class Emitter {
         mPos = Vector3.Zero.cpy();
         mTransform = new Matrix4();
 
-        mGLIndex = index;
+        mGLIndex = 0;
         mGLIndexString = String.format("[%d]", mGLIndex);
     }
 
@@ -67,7 +69,15 @@ public class Emitter {
         shaderProgram.setUniform1fv("u_wavesEnd" + mGLIndexString, new float[]{mEnd}, 0, 1);
     }
 
-    public void trigger(Vector2 pos) {
+    protected void setGLIndex(int index) {
+        mGLIndex = index;
+        mGLIndexString = String.format("[%d]", mGLIndex);
+        mActive = true;
+    }
+
+    public void trigger(Vector2 pos, int index) {
+        setGLIndex(index);
+
         mTriggerTime = mTriggerLength;
         mEnd = 0.0f;
         mTheta = 0.0f;
@@ -78,10 +88,16 @@ public class Emitter {
 
     public void update(float delta) {
 
-        if (mTriggerTime > 0) {
+        if (mActive) {
             mTriggerTime -= delta;
             mEnd += mTriggerSpeed*delta;
             mTheta += mSpinRate * delta;
+
+            if (mTriggerTime < 0) {
+                mTriggerTime = 0;
+                mEnd = 0.0f;
+                mTheta = 0.0f;
+            }
         }
     }
 
@@ -94,5 +110,9 @@ public class Emitter {
     public void renderCircle(ShapeRenderer shapeRenderer) {
         shapeRenderer.circle(mPos.x, mPos.y, mEnd);
         shapeRenderer.circle(mPos.x, mPos.y, mEnd-mTriggerWidth);
+    }
+
+    public boolean isActive() {
+        return mActive;
     }
 }

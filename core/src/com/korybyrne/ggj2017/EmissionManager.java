@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,15 +14,14 @@ public class EmissionManager {
     static {
         mInstance = new EmissionManager();
     }
-    private static final int WAVES = 2;
+    private static final int WAVES = 10;
 
-    private List<Emitter> mEmitters;
+    private final Emitter[] mEmitters = new Emitter[WAVES];
+    private int mCurrentIndex = 0;
 
     private EmissionManager() {
-        mEmitters = new ArrayList<Emitter>();
-
         for (int i = 0; i < WAVES; i++) {
-            mEmitters.add(new Emitter(i));
+            mEmitters[i] = new Emitter();
         }
     }
 
@@ -36,10 +36,29 @@ public class EmissionManager {
             emitter.setEmissionUniforms(shaderProgram);
             emitter.render(shaderProgram);
         }
+
+        float active = 0.0f;
+
+        for (Emitter emitter : mEmitters) {
+            active += emitter.isActive()? 1:0;
+        }
+        System.out.println(String.format("Active: %f", active));
+        shaderProgram.setUniform1fv("u_wavesActive", new float[]{active}, 1, 1);
     }
 
-    public void trigger(int index, Vector2 pos) {
-        mEmitters.get(index).trigger(pos);
+    public void trigger(Vector2 pos) {
+        int startIndex = mCurrentIndex;
+
+        while (mEmitters[mCurrentIndex].isActive()) {
+            mCurrentIndex = (mCurrentIndex + 1) % mEmitters.length;
+            if (startIndex == mCurrentIndex) {
+                System.out.println("All emitters full");
+                return;
+            }
+        }
+
+        mEmitters[mCurrentIndex].trigger(pos, mCurrentIndex);
+        mCurrentIndex = (mCurrentIndex + 1) % mEmitters.length;
     }
 
     public static EmissionManager getInstance() {

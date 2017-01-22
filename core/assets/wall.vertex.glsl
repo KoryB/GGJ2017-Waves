@@ -1,5 +1,5 @@
 #define pi2 6.283185307179586
-#define WAVES 2
+#define WAVES 10
 
 attribute vec4 a_position;
 
@@ -13,6 +13,7 @@ uniform float u_wavesFreq[WAVES];
 
 uniform float u_wavesWidth[WAVES];
 uniform float u_wavesEnd[WAVES];
+uniform float u_wavesActive;
 
 varying float v_oscillationOffest;
 
@@ -37,11 +38,11 @@ void main() {
                 sin(pi2 * (distToMe-(u_wavesEnd[i] - u_wavesWidth[i])) / u_wavesWidth[i]),
                 2);
 
-            oscillationOffset += toMe * ((oscillation * attenuation) / float(WAVES) );
+            oscillationOffset += toMe * ((oscillation * attenuation) / u_wavesActive );
             totalOscillation += (oscillation * attenuation) / (u_wavesAmplitude[i]);
         }
     }
 
-    v_oscillationOffest = totalOscillation / (float(WAVES));
+    v_oscillationOffest = totalOscillation / u_wavesActive;
     gl_Position = u_projTrans * (globalPos + oscillationOffset);
 }

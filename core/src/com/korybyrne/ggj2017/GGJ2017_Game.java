@@ -29,8 +29,6 @@ public class GGJ2017_Game implements Screen {
 
     Vector3 mousePos;
     boolean mouseDown = false;
-    Wall hwall = new HorizWall(new Vector3(Gdx.graphics.getWidth()/2, Gdx.graphics.getHeight()/2, 0));
-    Wall vwall = new VertWall(new Vector3(Gdx.graphics.getWidth()/2 + 20, Gdx.graphics.getHeight()/2 + 20, 0));
 
     List<Wall> mWalls;
     int numWalls = 16;
@@ -88,15 +86,15 @@ public class GGJ2017_Game implements Screen {
 
         floorBody = PHYS_MAN.getBox(
                 Gdx.graphics.getWidth() / 2 - 75, Gdx.graphics.getHeight() / 2 - 50,
-                100, 5,
-                BodyDef.BodyType.StaticBody, true
+                500, 5,
+                BodyDef.BodyType.StaticBody, true, Box2DManager.NORMAL_GROUP
         );
         floorBody.setUserData(0);
 
         floorBody2 = PHYS_MAN.getBox(
                 Gdx.graphics.getWidth() / 2 + 100, Gdx.graphics.getHeight() / 2 - 150,
                 100, 5,
-                BodyDef.BodyType.StaticBody, true
+                BodyDef.BodyType.StaticBody, true, Box2DManager.NORMAL_GROUP
         );
         floorBody2.setUserData(1);
     }
@@ -115,12 +113,12 @@ public class GGJ2017_Game implements Screen {
         PHYS_MAN.updateDebug(camera.combined);
 
         EM_MAN.update(delta);
-        PHYS_MAN.updateSprite(player.getSprite(), player.getBody());
+        player.update(delta);
 
-        if (!mouseDown && Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
-            mouseDown = true;
-        } else {
-            mouseDown = false;
+        if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+            player.rotateLeft();
+        } else if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
+            player.rotateRight();
         }
 
         mousePos.set(Gdx.input.getX(), Gdx.input.getY(), 0);
