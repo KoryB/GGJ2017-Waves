@@ -11,7 +11,7 @@ import com.badlogic.gdx.math.Vector3;
 
 public class Emitter {
     private static Mesh MESH = null;
-    private static float AMPLITUDE = 10.0f;
+    public static float AMPLITUDE = 10.0f;
     private static float PERIOD = 10f;
     private static float FREQUENCY = (float) (2*Math.PI/20);  // Period of 10
 
@@ -20,17 +20,19 @@ public class Emitter {
     private float mTheta;
     private Matrix4 mTransform;
 
-    private float mTriggerTime = 0.0f;
-    private float mTriggerLength = 2.0f;
+    public float mTriggerTime = 0.0f;
+    public float mTriggerLength = 2.0f;
     private float mEnd = 0.0f;
-    private float mFinalEnd = 500.0f;
-    private float mTriggerSpeed = mFinalEnd / mTriggerLength;
-    private float mTriggerWidth = 50.0f;
+    public float mFinalEnd = 500.0f;
+    public float mTriggerSpeed = mFinalEnd / mTriggerLength;
+    public float mTriggerWidth = 50.0f;
     private int mGLIndex;
     private String mGLIndexString;
 
     private boolean mActive = false;
     private boolean mDrawNextFrame = false;
+
+    private boolean mContinuous = false;
 
     public Emitter() {
         if (MESH == null) {
@@ -81,6 +83,10 @@ public class Emitter {
     }
 
     public void trigger(Vector2 pos, int index) {
+        trigger(pos, index, false);
+    }
+
+    public void trigger(Vector2 pos, int index, boolean continuous) {
         setGLIndex(index);
 
         mTriggerTime = mTriggerLength;
@@ -89,6 +95,8 @@ public class Emitter {
 
         mPos.x = pos.x;
         mPos.y = pos.y;
+
+        mContinuous = continuous;
     }
 
     public void update(float delta) {
@@ -98,10 +106,9 @@ public class Emitter {
             mEnd += mTriggerSpeed*delta;
             mTheta += mSpinRate * delta;
 
-            if (mTriggerTime < 0) {
+            if (mTriggerTime < 0 && ! mContinuous) {
                 mActive = false;
                 mDrawNextFrame = true;
-                mTriggerTime = 0;
                 mEnd = 0.0f;
                 mTheta = 0.0f;
             }

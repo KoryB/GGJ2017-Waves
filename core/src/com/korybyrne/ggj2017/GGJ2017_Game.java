@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GGJ2017_Game implements Screen {
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private static final float DEBUG_SPEED = 1200;
     public static Rectangle SCREEN;
     final Drop game;
@@ -48,6 +48,8 @@ public class GGJ2017_Game implements Screen {
     float mLastY;
     float mLastW;
     float mLastH;
+
+    boolean mExploded = false;
 
     public GGJ2017_Game(final Drop gam) {
         this.game = gam;
@@ -148,12 +150,13 @@ public class GGJ2017_Game implements Screen {
         // Levelfour
         add(hallwidth, unit*36+five, unit*37, three);
         add(mLastX+mLastW+six+ten, mLastY-unit, twenty+six, unit);
-        add(mLastX, mLastY+mLastH, twenty, unit);
+        add(mLastX, mLastY+mLastH, mLastW, unit);
 
-        add(mLastX+three, mLastY+mLastH+three, twenty+three, unit);
+        add(mLastX+three, mLastY+mLastH+two, twenty+three, unit);
+        add(mLastX, mLastY+mLastH, twenty+three, unit);
         add(mLastX, mLastY+mLastH, twenty+three, unit);
 
-        add(mLastX-unit*7-five, mLastY-three, five, three);
+        levelAdd(new PhysHorizWall(five, new Vector2(mLastX - unit * 7 - six, mLastY - unit)));
 //        add(mLastX+mLastW+)
 
 
@@ -220,6 +223,13 @@ public class GGJ2017_Game implements Screen {
                     player = new Player(mousePos);
                 }
             }
+        }
+
+        if (    Gdx.input.isKeyPressed(Input.Keys.W) &&
+                Gdx.input.isKeyPressed(Input.Keys.I) &&
+                Gdx.input.isKeyPressed(Input.Keys.N) && !mExploded) {
+            mExploded = true;
+            EmissionManager.getInstance().explode(new Vector2(player.getSprite().getX(), player.getSprite().getY()));
         }
 
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {

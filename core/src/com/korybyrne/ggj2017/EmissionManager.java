@@ -64,6 +64,19 @@ public class EmissionManager {
         mCurrentIndex = (mCurrentIndex + 1) % mEmitters.length;
     }
 
+    public void explode(Vector2 pos) {
+        int i = 0;
+        for (Emitter emitter : mEmitters) {
+            Emitter.AMPLITUDE = 15.0f;
+            emitter.mTriggerLength = 2.0f;
+            emitter.trigger(pos, i, true);
+            emitter.mFinalEnd = 500f;
+            emitter.mTriggerWidth = 10000f;
+        }
+
+        mCurrentIndex = 0;
+    }
+
     public static EmissionManager getInstance() {
         return mInstance;
     }
