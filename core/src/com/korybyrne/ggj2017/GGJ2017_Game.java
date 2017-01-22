@@ -100,7 +100,8 @@ public class GGJ2017_Game implements Screen {
         float two = unit*2;
         float three = unit*3;
         float four = unit*4;
-        float six = three*2;
+        float five = unit*5;
+        float six = unit*6;
 
         player = new Player(new Vector3(hallwidth/2f - unit/2, hallheight, 0f));
 
@@ -108,7 +109,7 @@ public class GGJ2017_Game implements Screen {
         add(hallwidth, unit*10, unit*2, hallheight);
 
         //Gubbins
-        add(0, hallheight/2f + unit*5, hallwidth - unit*6, unit);
+        add(0, hallheight/2f + five, hallwidth - unit*6, unit);
         add(hallwidth - unit*1, hallheight - unit*39, unit*1, unit);
 
 
@@ -127,13 +128,14 @@ public class GGJ2017_Game implements Screen {
         add(mLastX+ten, mLastY+mLastH, ten, three);
         add(mLastX+six, mLastY+mLastH, four, three);
         float endx = mLastX + mLastW;
-        add(mLastX-six, unit*12, six, three);
+        add(mLastX-six, unit*13, three, two);
+        add(mLastX+mLastW, mLastY-unit, three, unit);
         add(endx, -unit, two, hallheight);
 
         // Leveltwo
-        add(hallwidth, unit*5 + unit*20, unit*33, unit*5);
+        add(hallwidth, five + unit*20, unit*33, five);
         add(mLastX+mLastW, mLastY, six, two);
-        add(mLastX+mLastW+unit*5, mLastY - four, unit*15, two);
+        add(mLastX+mLastW+five, mLastY - four, unit*15, two);
         add(mLastX+mLastW+three, mLastY - four, six, two);
 
 
