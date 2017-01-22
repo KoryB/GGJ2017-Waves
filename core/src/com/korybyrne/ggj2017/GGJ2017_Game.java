@@ -32,6 +32,7 @@ public class GGJ2017_Game implements Screen {
 
     PhysWall physWall;
     PhysWall vertWall;
+    PhysBox physBox;
     int segments = 16;
 
     Player player = new Player();
@@ -76,6 +77,7 @@ public class GGJ2017_Game implements Screen {
 
         physWall = new PhysHorizWall(segments, new Vector2(0, 20));
         vertWall = new PhysVertWall(segments, new Vector2(100, 1));
+        physBox = new PhysBox(-200, -200, 1600, 200);
     }
 
     @Override
@@ -119,6 +121,7 @@ public class GGJ2017_Game implements Screen {
         EM_MAN.render(shaderProgram);
         physWall.render(shaderProgram);
         vertWall.render(shaderProgram);
+        physBox.render(shaderProgram);
         player.render(shaderProgram);
 
         shaderProgram.end();

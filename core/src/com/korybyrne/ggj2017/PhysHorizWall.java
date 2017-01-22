@@ -8,6 +8,10 @@ import java.util.ArrayList;
 
 public class PhysHorizWall extends PhysWall {
 
+    public PhysHorizWall(float width, Vector2 bottomleft) {
+        this(Math.round(width / Wall.SIZE), bottomleft);
+    }
+
     public PhysHorizWall(int segments, Vector2 bottomleft) {
         super(segments);
 

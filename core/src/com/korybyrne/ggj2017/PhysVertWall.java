@@ -8,6 +8,10 @@ import java.util.ArrayList;
 
 public class PhysVertWall extends PhysWall {
 
+    public PhysVertWall(float height, Vector2 bottomleft) {
+        this(Math.round(height / Wall.SIZE), bottomleft);
+    }
+
     public PhysVertWall(int segments, Vector2 bottomleft) {
         super(segments);
 
