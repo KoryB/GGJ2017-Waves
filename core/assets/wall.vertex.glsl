@@ -2,6 +2,7 @@
 #define WAVES 10
 
 attribute vec4 a_position;
+attribute vec2 a_texCoord;
 
 uniform mat4 u_projTrans;
 uniform mat4 u_trans;
@@ -16,7 +17,7 @@ uniform float u_wavesEnd[WAVES];
 uniform float u_wavesFinal[WAVES];
 uniform float u_wavesActive;
 
-
+varying vec2 v_texcoords;
 varying float v_oscillationOffest;
 
 void main() {
@@ -46,8 +47,7 @@ void main() {
         }
     }
 
-
-
+    v_texcoords = a_texCoord;
     v_oscillationOffest = totalOscillation;
     gl_Position = u_projTrans * (globalPos + oscillationOffset);
 }

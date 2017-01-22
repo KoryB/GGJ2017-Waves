@@ -53,7 +53,7 @@ public class GGJ2017_Game implements Screen {
         // create the camera and the SpriteBatch
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Drop.SCREEN_WIDTH, Drop.SCREEN_HEIGHT);
-        camera.translate(0, 0);
+        camera.zoom = 2f;
 
         shaderProgram = new ShaderProgram(
                 Gdx.files.internal("wall.vertex.glsl"),
@@ -103,28 +103,29 @@ public class GGJ2017_Game implements Screen {
             player.rotateRight();
         }
 
+        if (Gdx.input.isKeyPressed(Input.Keys.Z)) {
+            player.jump();
+        }
+
         mousePos.set(Gdx.input.getX(), Gdx.input.getY(), 0);
         camera.unproject(mousePos);
+
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        EM_MAN.renderCircles(shapeRenderer);
+        shapeRenderer.end();
 
         shaderProgram.begin();
         shaderProgram.setUniformMatrix("u_projTrans", camera.combined);
         EM_MAN.render(shaderProgram);
         physWall.render(shaderProgram);
         vertWall.render(shaderProgram);
+        player.render(shaderProgram);
+
         shaderProgram.end();
 
-
-        spriteBatch.begin();
-        player.render(spriteBatch);
-        spriteBatch.end();
-
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        EM_MAN.renderCircles(shapeRenderer);
-        shapeRenderer.end();
-
-//        PHYS_MAN.renderDebug();
-
+        PHYS_MAN.renderDebug();
         PHYS_MAN.step(delta);
+
     }
 
     @Override

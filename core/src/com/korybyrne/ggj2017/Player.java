@@ -1,10 +1,16 @@
 package com.korybyrne.ggj2017;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Mesh;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.VertexAttribute;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShaderProgram;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.Body;
@@ -19,14 +25,17 @@ import java.util.List;
  * Created by kory on 1/21/17.
  */
 public class Player {
+    private static Mesh MESH;
     private static final short JOINT_GROUP = (short)-1;
     private static final float IMPULSE_VALUE = 40.0f;
+    private static final float JUMP_VALUE = 40.0f;
     private static final float JOINT_HW = 1;
-    private static final float SPEED_THRESHOLD = 2;
+    private static final float SPEED_THRESHOLD = 1;
+    private static final float IN_AIR_THRESHOLD = 0.2f;
     private static final Vector2 UR_VEC = new Vector2(1, 1).nor();
     private static final Vector2 UL_VEC = new Vector2(-1, 1).nor();
 
-    private Texture mTexture;
+    private static Texture TEXTURE;
     private Sprite mSprite;
     private float mHalfWidth, mHalfHeight;
     private float mHalfPhysWidth, mHalfPhysHeight;
@@ -35,18 +44,32 @@ public class Player {
     private float mCurrentSpeed = 0;
     private float mOldSpeed = 0;
     private boolean mMovingLeft = false;
+    private float mStartTheta = 0.0f;
+    private boolean mInAir = false;
+    private boolean mCanRotate = true;
 
     private Vector3 mPos;
     private Body mBody;
+    private Matrix4 mTransform = new Matrix4();
 
     private List<RevoluteJoint> mJoints;    // 2 3
                                             // 1 0
     private RevoluteJoint mStaticJoint = null;
+    private boolean mRotating = false;
 
     public Player() {
+        if (MESH == null) {
+            MESH = new Mesh(true, 4, 0, VertexAttribute.Position());
+            MESH.setVertices(new float[]{
+                    -32, -32, 0,
+                    -32, 32, 0,
+                    32, -32, 0,
+                    32, 32, 0
+            });
+        }
         // load the images for the droplet and the bucket, 64x64 pixels each
-        mTexture = new Texture(Gdx.files.internal("bucket.png"));
-        mSprite = new Sprite(mTexture);
+        TEXTURE = new Texture(Gdx.files.internal("player.png"));
+        mSprite = new Sprite(TEXTURE);
         mSprite.setOriginCenter();
         mHalfWidth = mSprite.getWidth()/2;
         mHalfHeight = mSprite.getHeight()/2;
@@ -119,28 +142,46 @@ public class Player {
     public void update(float delta) {
         Box2DManager.getInstance().updateSprite(mSprite, mBody);
 
-        if (mStaticJoint != null) {
-            mCurrentSpeed = mBody.getLinearVelocity().len() + Math.abs(mBody.getAngularVelocity());
-            mOldSpeed = 0.1f*mCurrentSpeed + 0.9f*mOldSpeed;
+        mInAir = (Math.abs(mBody.getLinearVelocity().y) > IN_AIR_THRESHOLD);
 
-            if (mCurrentSpeed <= SPEED_THRESHOLD) {
-                mBody.setAngularVelocity(0);
-                mBody.setLinearVelocity(Vector2.Zero);
-                mStaticJoint.getBodyB().setType(BodyDef.BodyType.DynamicBody);
-                mStaticJoint = null;
+        mCurrentSpeed = Math.abs(mBody.getLinearVelocity().y) + Math.abs(mBody.getAngularVelocity());
+        mOldSpeed = 0.1f*mCurrentSpeed + 0.9f*mOldSpeed;
 
-                if (mMovingLeft) {
-                    EmissionManager.getInstance().trigger(
-                            mBody.getWorldCenter().cpy()
-                            .add(UR_VEC.cpy().scl(-mHalfPhysDiagonal))
-                            .scl(Box2DManager.WORLD_SCALE)
-                    );
-                } else {
-                    EmissionManager.getInstance().trigger(
-                            mBody.getWorldCenter().cpy()
-                            .add(UL_VEC.cpy().scl(-mHalfPhysDiagonal))
-                            .scl(Box2DManager.WORLD_SCALE)
-                    );
+        boolean slowed = mCurrentSpeed <= SPEED_THRESHOLD;
+        boolean rotated = Math.abs(getDegrees() - mStartTheta) >= 90;
+
+        if (slowed) {
+            mCanRotate = true;
+        }
+
+        if (mRotating) {
+
+            if (slowed || rotated) {
+                if (slowed) {
+                    mBody.setAngularVelocity(0);
+                    mBody.setLinearVelocity(Vector2.Zero);
+                }
+
+                if (mStaticJoint != null) {
+                    mStaticJoint.getBodyB().setType(BodyDef.BodyType.DynamicBody);
+                    mStaticJoint = null;
+                }
+                mRotating = false;
+
+                if (!mInAir) {
+                    if (mMovingLeft) {
+                        EmissionManager.getInstance().trigger(
+                                mBody.getWorldCenter().cpy()
+                                        .add(UR_VEC.cpy().scl(-mHalfPhysDiagonal))
+                                        .scl(Box2DManager.WORLD_SCALE)
+                        );
+                    } else {
+                        EmissionManager.getInstance().trigger(
+                                mBody.getWorldCenter().cpy()
+                                        .add(UL_VEC.cpy().scl(-mHalfPhysDiagonal))
+                                        .scl(Box2DManager.WORLD_SCALE)
+                        );
+                    }
                 }
             }
         }
@@ -154,38 +195,67 @@ public class Player {
         return (getRightIndex()+1) % 4;
     }
 
-    public void rotateRight() {
-        if (mStaticJoint == null) {
-            mStaticJoint = mJoints.get(
-                    getRightIndex()
-            );
-            mStaticJoint.getBodyB().setType(BodyDef.BodyType.StaticBody);
-            mBody.applyLinearImpulse(
-                    UR_VEC.cpy().scl(IMPULSE_VALUE),
-                    mBody.getWorldCenter().cpy().add(UL_VEC.cpy().scl(mHalfPhysDiagonal)),
-                    true
-            );
+    private void rotate(int index, Vector2 impulse, Vector2 pos, boolean left) {
+        if (!mRotating && mCanRotate) {
+            mCanRotate = !mInAir;
+            mRotating = true;
+
+            if (!mInAir) {
+                mStaticJoint = mJoints.get(index);
+                mStaticJoint.getBodyB().setType(BodyDef.BodyType.StaticBody);
+                mBody.applyLinearImpulse(impulse, pos, true);
+            } else {
+                mBody.applyLinearImpulse(impulse.scl(1), mBody.getWorldCenter(), true);
+                mBody.applyAngularImpulse(15 * (left? 1:-1), true);
+            }
 
             mOldSpeed = IMPULSE_VALUE;
-            mMovingLeft = false;
+            mStartTheta = getDegrees();
+            mMovingLeft = left;
         }
     }
 
-    public void rotateLeft() {
-        if (mStaticJoint == null) {
-            mStaticJoint = mJoints.get(
-                    getLeftIndex()
-            );
-            mStaticJoint.getBodyB().setType(BodyDef.BodyType.StaticBody);
-            mBody.applyLinearImpulse(
-                    UL_VEC.cpy().scl(IMPULSE_VALUE),
-                    mBody.getWorldCenter().cpy().add(UR_VEC.cpy().scl(mHalfPhysDiagonal)),
-                    true
-            );
-
-            mOldSpeed = IMPULSE_VALUE;
-            mMovingLeft = true;
+    public void jump() {
+        if (!mInAir) {
+            mBody.applyLinearImpulse(Vector2.Y.cpy().scl(JUMP_VALUE), mBody.getWorldCenter(), true);
         }
+    }
+
+    public void rotateRight() {
+        rotate(
+                getRightIndex(),
+                UR_VEC.cpy().scl(IMPULSE_VALUE),
+                mBody.getWorldCenter().cpy().add(UL_VEC.cpy().scl(mHalfPhysDiagonal)),
+                false
+        );
+    }
+
+    public void rotateLeft() {
+        rotate(
+                getLeftIndex(),
+                UL_VEC.cpy().scl(IMPULSE_VALUE),
+                mBody.getWorldCenter().cpy().add(UR_VEC.cpy().scl(mHalfPhysDiagonal)),
+                true
+        );
+    }
+
+    public void render(ShaderProgram shaderProgram) {
+        mTransform.idt().translate(mSprite.getX(), mSprite.getY(), 0).rotate(Vector3.Z, mSprite.getRotation());
+        shaderProgram.setUniformMatrix("u_trans", mTransform);
+        TEXTURE.bind(0);
+        shaderProgram.setUniformi("u_texture", 0);
+        MESH.render(shaderProgram, GL20.GL_TRIANGLE_STRIP);
+    }
+
+    public void render(ShapeRenderer renderer) {
+        renderer.setColor(0.2f, 0.2f, 0.2f, 1.0f);
+        renderer.rect(
+                mSprite.getX() - mSprite.getWidth()/2, mSprite.getY() - mSprite.getHeight()/2,
+                mSprite.getOriginX(), mSprite.getOriginY(),
+                mSprite.getWidth(), mSprite.getHeight(),
+                mSprite.getScaleX(), mSprite.getScaleY(),
+                mSprite.getRotation()
+        );
     }
 
     public void render(SpriteBatch batch) {
@@ -208,6 +278,6 @@ public class Player {
     }
 
     public void dispose() {
-        mTexture.dispose();
+        TEXTURE.dispose();
     }
 }
